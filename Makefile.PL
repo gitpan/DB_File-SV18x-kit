@@ -61,7 +61,14 @@ trying to guess defaults
 }
 
 $TERM = Term::ReadLine->new('DB_File::SV18x install') if $THIS{HAS_TRL};
-$THIS{VERSION} = '0.03'; # will be appended to Paul's without the dot
+{
+  local *F;
+  open F, "SV18x.pm" or die;
+  local $/;
+  my($version) = <F> =~ /VERSION=\"(\d+\.\d+)\"/;
+  close F;
+  $THIS{VERSION} = $version; # will be appended to Paul's without the dot
+}
 
 if ($THIS{DB_SRC} && -d $THIS{DB_SRC}) {
   if ($THIS{DB_SRC} =~ m|/db\.(\d\.\d+)/|) {
@@ -175,6 +182,8 @@ sub grok_db_file_xs {
   my($vsym) = $this->{DB_VERSION_SYM};
   my($out) = "SV$vsym.xs";
   open IN, $in or die "Couldn't open $in: $!";
+  unlink "$out.bak";
+  rename $out, "$out.bak";
   open SV, ">$out" or die "Couldn't open >$out\: $!";
   my $in_C = 1;
   while (<IN>) {
@@ -198,6 +207,8 @@ sub grok_test {
   my($vsym) = $this->{DB_VERSION_SYM};
   my($out) = $file;
   open IN, $in or die "Couldn't open $in: $!";
+  unlink "$out.bak";
+  rename $out, "$out.bak";
   open SV, ">$out" or die "Couldn't open >$out\: $!";
   my $re = q{((?:package|use|new|tie|croak|qw|\@)
 	      [\s\"\(^/~=\',x%hgk]*DB_File)(\b[^:]|::[A-RT-Z]\w+)};
@@ -223,6 +234,8 @@ sub grok_db_file_pm {
   my($vsym) = $this->{DB_VERSION_SYM};
   my($out) = "SV$vsym.pm";
   open IN, $in or die "Couldn't open $in: $!";
+  unlink "$out.bak";
+  rename $out, "$out.bak";
   open SV, ">$out" or die "Couldn't open >$out\: $!";
   my $re = q{((?:package|bootstrap|new|croak|qw|\@)
 	      [\s\"\(]*DB_File)(\b[^:]|::[A-RT-Z]\w+)};
@@ -253,6 +266,8 @@ sub grok_typemap {
   my($vsym) = $this->{DB_VERSION_SYM};
   my($out) = "typemap";
   open IN, $in or die "Couldn't open $in: $!";
+  unlink "$out.bak";
+  rename $out, "$out.bak";
   open SV, ">$out" or die "Couldn't open >$out\: $!";
   while (<IN>) {
     s{^DB_File}{DB_File::SV$vsym};
