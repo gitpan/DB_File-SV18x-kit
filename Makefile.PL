@@ -168,7 +168,10 @@ sub get_pmqs {
   for my $file (qw(DB_File.pm DB_File.xs typemap t/db-btree.t
 		   t/db-hash.t t/db-recno.t)) {
     my $abs = MM->catfile($this->{DB_FILE_PMQS},$file);
-    die "Couldn't find $abs. Can't continue" unless -f $abs;
+    unless (-f $abs){
+      warn "Couldn't find $abs. Continuing is DANGEROUS";
+      return;
+    }
   }
   grok_db_file_pm($this);
   grok_db_file_xs($this);
@@ -247,7 +250,7 @@ sub grok_db_file_pm {
   unlink "$out.bak";
   rename $out, "$out.bak";
   open SV, ">$out" or die "Couldn't open >$out\: $!";
-  my $re = q{((?:package|bootstrap|new|croak|qw|\@)
+  my $re = q{((?:package|bootstrap|new|croak|load|qw|\@)
 	      [\s\"\(]*DB_File)(\b[^:]|::[A-RT-Z]\w+)};
   while (<IN>) {
     my $shadow = $_;

@@ -1,5 +1,5 @@
 package DB_File::SV18x;
-$VERSION="0.05";
+$VERSION="0.06";
 
 die "DB_File::SV18x is a dummy package without functionality.
 Please try DB_File::SV185 or DB_File::SV186, whatever has been

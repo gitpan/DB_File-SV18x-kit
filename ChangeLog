@@ -1,3 +1,7 @@
+2000-03-06  Andreas J. Koenig  <andreas.koenig@anima.de>
+
+	* Adjusted for DB_File 1.72
+
 1999-12-04  Andreas J. Koenig  <andreas.koenig@anima.de>
 
 	* Adjusted for DB_File 1.71
