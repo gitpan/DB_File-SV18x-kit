@@ -6,7 +6,9 @@ impeded by the difficult upgrade path users have with berkeley db.
 Sleepycat software wants to get rid of the file format used by db 1.8x
 because it has severe flaws and can't be made to work as good as db
 2.x. So they offer only modest support for a coexistence of 1.85 and
-2.x. This kit closes the gap.
+2.x. This kit closes the gap. It builds Berkeley db libraries for the
+historical releases, but it does so in a separate namespace to allow
+for co-existence.
 
 While this kit is centered around perl, it is useful for developers of
 other languages as well. Once you have a db.1.8x that has *no*

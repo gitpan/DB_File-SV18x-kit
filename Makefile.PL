@@ -63,7 +63,7 @@ trying to guess defaults
 $TERM = Term::ReadLine->new('DB_File::SV18x install') if $THIS{HAS_TRL};
 {
   local *F;
-  open F, "SV18x.pm" or die;
+  open F, "SV18x.pm" or die "Couldn't find SV18x.pm: $!";
   local $/;
   my($version) = <F> =~ /VERSION=\"(\d+\.\d+)\"/;
   close F;
@@ -116,7 +116,7 @@ print qq{
 Shall I build a new libdb_sv$THIS{DB_VERSION_SYM} for you?
 };
 
-$THIS{MAKE_DB_LIB} = _prompt("MAKE_DB_LIB?","yes");
+$THIS{MAKE_DB_LIB} = _prompt("MAKE_DB_LIB?",$THIS{MAKE_DB_LIB}||"yes");
 $THIS{DB_LIB} = "$THIS{DB_SRC}/libdb_sv$THIS{DB_VERSION_SYM}$Config{lib_ext}";
 unless ($THIS{MAKE_DB_LIB} =~ /^y/i || -f $THIS{DB_LIB}) {
   die "Can't proceed without a valid $THIS{DB_LIB}";
@@ -141,6 +141,8 @@ be un-tarred.
 };
 $THIS{DB_FILE_PMQS} = _prompt("DB_FILE_PMQS?", $THIS{DB_FILE_PMQS});
 
+write_config(\%THIS) unless $have_config;
+
 get_pmqs(\%THIS);
 
 build_alternative_db(\%THIS);
@@ -158,7 +160,7 @@ WriteMakefile(
 			   SUFFIX   => 'gz',
 			   VERSION  => "$THIS{VERSION}",
 			  },    
-	      'clean'  => {FILES => 'SV18?.?? typemap t/db-*.t'},
+	      'clean'  => {FILES => 'SV18[56].?? typemap t/db-*.t'},
 	     );
 
 sub get_pmqs {
@@ -185,14 +187,21 @@ sub grok_db_file_xs {
   unlink "$out.bak";
   rename $out, "$out.bak";
   open SV, ">$out" or die "Couldn't open >$out\: $!";
-  my $in_C = 1;
+  my $in_comment = 1;
+  my $in_XS = 0;
   while (<IN>) {
     s/DB_File_type/DB_File__SV$vsym\_type/;
-    if ($in_C) {
-      $in_C = 0 if m|\*/|;
+    if ($in_comment) {
+      $in_comment = 0 if m|\*/|;
+    } elsif (/DB_File\s+db/ && ! $in_XS) {
+      s/DB_File\b/DB_File__SV$vsym/g;
     } elsif (/typedef|static|RETVAL| db /) {
       s/DB_File\b/DB_File__SV$vsym/g;
+    } elsif (s/__getBerkeleyDBInfo.*//) {
     } else {
+      if (/^MODULE/) {
+	$in_XS = 1;
+      }
       s/DB_File\b/DB_File::SV$vsym/g;
     }
     print SV $_;
@@ -219,6 +228,7 @@ sub grok_test {
     ### relevant only for perl's own tests; this seems not so
     1 while s{ $re
 	     }{$1::SV$vsym$2}xo;
+    s/::/::SV$vsym\::/ if /\$db185mode\s+=/; # test in db-btree.t
     print SV $_;
     if ($shadow =~ /\b__END__\b/) {
       last;
@@ -249,7 +259,7 @@ sub grok_db_file_pm {
       my $mine = $this->{VERSION};
       $mine =~ s/\D//g;
       $THIS{MANGLED_VERSION} = "$pauls$mine";
-      $_ = qq{\$VERSION = "$THIS{MANGLED_VERSION}";\n};
+      $_ = qq{\$VERSION = "$THIS{MANGLED_VERSION}"; \$db_version = "1";\n};
     }
     print SV $_;
     if ($shadow =~ /\b__END__\b/) {
@@ -354,4 +364,18 @@ sub bestmatch {
     }
   }
   $C;
+}
+
+sub write_config {
+  my $h = shift;
+  my $file = "config.db_file_" . $h->{DB_VERSION};
+  if (-f $file) {
+    warn "Config file $file exists, won't overwrite\n";
+    return;
+  }
+  open F, ">$file" or die "Couldn't write $file: $!";
+  while (my($k,$v) = each %$h) {
+    print F "$k = $v\n";
+  }
+  close F;
 }
