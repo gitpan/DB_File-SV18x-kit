@@ -1,0 +1,98 @@
+The berkeley db survival kit
+============================
+
+It's an euphemism, I know, but for several months now I feel impeded
+by the difficult upgrade path users have with berkeley db. Sleepycat
+software wants to get rid of the file format used by db 1.8x because
+it has severe flaws and can't be made to work as good as db 2.x. So
+they offer only weak support for coexistence of 1.85 and 2.x. This kit
+closes the gap.
+
+While this kit is centered around perl, it is useful for developers of
+other languages as well. Once you have a db.1.8x that has *no*
+conflicts with db-2.x, you can write your programs in a much more
+convenient way. True, you have to edit and recompile your packages
+instead of just relinking them, but in the long run, this pays off
+better (at least for me). And for perl developers, this difference
+is hardly noticable (yet).
+
+
+Prerequisites
+-------------
+
+You need berkeley db 1.85 or 1.86 and the DB_File sxtension by Paul
+Marquess in source form. You should convince yourself, that db can be
+built as it stands without the tweaks we will add to it during this
+procedure. (On my installations I always un-tarred all three packages
+below on common directory, so that the directories db.1.85,
+DB_File-1.57 and DB_File-SV18x-kit-0.03 were siblings). Then run
+
+    Makefile.PL
+
+You will be asked a few questions about locations of the
+aforementioned packages on your hard disk. You will be offered that
+the Makefile builds a new libdb_sv18[56] for you. The Makefile.PL will
+also extract several files from the DB_File sources. It then generates
+the Makefile. With that you can run
+
+    make
+    make test
+    make install
+
+as usual.
+
+Description
+-----------
+
+Since berkeley db 2.x came out, I had very unpleasant difficulties to
+switch to the new library because I'm running all my db based program
+on an apache and it's not possible to load two versions of DB_File
+into memory at a time. This means that you have to upgrade to the
+newer berkeley libraries in zero time for 100s of files.
+
+The solution to this problem is this kit which changes the C-level
+namespace for the old libraries so old and new libraries can coexist
+in memory. With this it is possible to upgrade slowly with a trivial
+path:
+
+1.) Install DB_File::SV185. Nothing happens. No harm done. All you
+    have done is you have provided a second lounge for your scripts.
+
+2.) Now you can change your scripts to use DB_File::SV185 instead of
+    DB_File. This change can take as long as you want. Nothing
+    really happens, just the processes that now mix DB_File *and*
+    DB_File::SV185 use more memory.
+
+3.) When you have changed all scripts, you can introduce a newer
+    berkeley db and again nothing happens. You just have gone out of
+    your way and provided a choice. You *can* switch back and forth
+    individual scripts quickly and easily.
+
+
+There is no configure support
+-----------------------------
+
+This package is intended for hackers that have been using berkely db
+before 2.x came out. It is not intended as a poor man's db that should
+be used as a workaround db's less liberal licensing. If you want to
+use it as the latter, you will probably know how to build configure
+support for yourself :-)
+
+If you have troubles compiling this package with symbols missing or
+duplicate symbols, have a look at the file db-survive.perl and try
+commenting out or uncomment the symbold that misbehaves. You will
+probably have to rerun Makefile.PL or touch the Makefile so that db
+gets a kick to rebuild itself. (This is a problem of the Makefiles
+that come with db).
+
+Credits
+-------
+
+Thanks to Keith Bostic for the db and his incredibly quick response
+times, to Paul Marquess for DB_File and his incredibly quick response
+times, to Doug MacEachern for mod_perl where I could learn interesting
+tricks for the Makefile.PL and to Ulrich Pfeifer who brought my
+attention to the bugs in db.1.8x.
+
+Enjoy,
+andreas koenig

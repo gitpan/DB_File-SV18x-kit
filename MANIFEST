@@ -1,0 +1,7 @@
+MANIFEST
+Makefile.PL
+README
+db-survive.perl
+grok.dbh.perl
+grok.dbmakefile.perl
+t/README
